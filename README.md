@@ -4,8 +4,34 @@ Pedal Users: Also note that you need to flash your Pedal to go to v0.5.10.  If y
 </b>
 
 
+This is a fork of comma's openpilot WITH GERNBY'S STEERING.  You can tune steering LIVE by SSH'ing into the Eon with your laptop or cell phone and running /data/openpilot/tune.sh.  Here are Gernby's tuning instructions:
 
-This is a fork of comma's openpilot, and contains tweaks for Hondas and GM vehicles 
+The logical approach for Gernby's dampened steering is this:
+ * Smooth the actual and desired steering values using a rolling average of samples every 0.01 seconds.  This results in data that is smooth, but with a natural time delay (delay is bad).
+ * To eliminate delay, the rolling average is performed using projected future values.
+    - projected steering angle uses the current reported steering angle + (steering_rate * projection_time)
+    - projected MPC angle uses a time shift to an angle further down the path
+ * Those 2 smoothed values are used as inputs to the PID function, which results in a much smoother and consistent torque value.
+Tuning consists of adjusting the number of samples that will be used for the rolling average (in seconds), then adjusting the future projection for the steering rate and MPC angle to adjust for delay.(edited)
+There are default values for all platforms, but here are some notes for tuning.
+* If you set these values to 0.0 in interface.py OR the kegman.json file, it should be just like standard OP:
+    MPCDampTime
+    MPCReactTime
+    steerDampTime
+    steerReactTime
+* If you already know some optimum values for some of the above parameters, those should still work.  You just need to refine the tune by adjusting the new values , then make another pass on the previous values
+* If you're starting from scratch, I suggest this strategy:
+   - set steerDampTime and steerReactTime both to 0
+   - set MPCDampTime to 0.10 and MPCReactTime to 0
+* Test the result on a straight, well market highway.  If the steering is erratic or slow, adjust the MPCReactTime value until it's as good or better than standard OP (the value can be in the range of -0.99 to 0.10
+* If you can achieve a value of MPCDampTime of 0.2, then start working with steerDampTime in the same manner.
+   - Increase steerDampTime from 0.0 to 0.05, and see how that does on the same straight highway.  If it's smooth, then increase it further.  Otherwise, decrease the value for steerReactTime until it's smooth.
+   - The goal is to increase the dampening values to 0.2 (same value for steerDampTime and MPCDampTime), with whatever React values are necessary for good performance on straights and curves.
+Here are some visual aids that show what the dampening does for the steering sensor data and MPC path data.  It essentially smooths and reshapes the "stair stepped lines" so that the steering error (used for torque calculation) is less noisy.
+https://cdn.discordapp.com/attachments/535128800653082654/559898164950466588/unknown.png
+https://cdn.discordapp.com/attachments/552156517273567273/560081120104808459/unknown.png
+https://cdn.discordapp.com/attachments/535128800653082654/559899382208790538/unknown.png(edited)
+
 
 <b>WARNING:</b>  Do NOT depend on OP to stop the car in time if you are approaching an object which is not in motion in the same direction as your car.  The radar will NOT detect the stationary object in time to slow your car enough to stop.  If you are approaching a stopped vehicle you must disengage and brake as radars ignore objects that are not in motion.
 
