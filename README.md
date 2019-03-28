@@ -6,7 +6,7 @@ Pedal Users: Also note that you need to flash your Pedal to go to v0.5.10.  If y
 
 This is a fork of comma's openpilot WITH GERNBY'S STEERING.  You can tune steering LIVE by SSH'ing into the Eon with your laptop or cell phone and running /data/openpilot/tune.sh.  Here are Gernby's tuning instructions:
 
-The logical approach for Gernby's dampened steering is this:
+<b>The logical approach for Gernby's dampened steering is this (Gernby's own words):</b>
  * Smooth the actual and desired steering values using a rolling average of samples every 0.01 seconds.  This results in data that is smooth, but with a natural time delay (delay is bad).
  * To eliminate delay, the rolling average is performed using projected future values.
     - projected steering angle uses the current reported steering angle + (steering_rate * projection_time)
