@@ -188,7 +188,7 @@ class CarInterface(object):
     # For modeling details, see p.198-200 in "The Science of Vehicle Dynamics (2014), M. Guiggiani"
 
     ret.steerKiBP, ret.steerKpBP = [[0.], [0.]]
-
+    ret.steerRateCost = 0.4
     ret.steerKf = 0.00006 # conservative feed-forward
 
     if candidate in [CAR.CIVIC, CAR.CIVIC_BOSCH]:
@@ -326,11 +326,16 @@ class CarInterface(object):
       ret.centerToFront = ret.wheelbase * 0.41
       ret.steerRatio = 16.0         # as spec
       tire_stiffness_factor = 0.82
-      ret.steerKpV, ret.steerKiV = [[0.45], [0.135]]
+      ret.steerKpV, ret.steerKiV = [[0.5], [0.22]]
+      ret.steerMPCReactTime = 0.0     # project desired angle 0 ms
+      ret.steerMPCDampTime = 0.1      # smooth desired angle over 300ms (30 samples)
+      ret.steerReactTime = 0.0        # project steer angle 0 ms (using steer rate)
+      ret.steerDampTime = 0.0        # smooth projected steer angle over 300ms (30 samples)
       ret.longitudinalKpBP = [0., 5., 35.]
       ret.longitudinalKpV = [1.2, 0.8, 0.5]
       ret.longitudinalKiBP = [0., 35.]
       ret.longitudinalKiV = [0.18, 0.12]
+      ret.steerRateCost = 0.35
 
     elif candidate == CAR.RIDGELINE:
       stop_and_go = False
@@ -401,7 +406,7 @@ class CarInterface(object):
     ret.startAccel = 0.5
 
     ret.steerActuatorDelay = 0.1
-    ret.steerRateCost = 0.4
+    
 
     return ret
 
