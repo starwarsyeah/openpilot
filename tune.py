@@ -47,29 +47,16 @@ while True:
   print ""
   print print_letters(kegman.conf[param[j]])
   print ""
-  print "reactMPC is an adjustment to the time projection of the MPC"
-  print "angle used in the dampening calculation.  Increasing this value"
-  print "would cause the vehicle to turn sooner."
-  print ""
-  print ""
-  print "reactSteer is an adjustment to the time projection of steering"
-  print "rate to determine future steering angle.  If the steering is "
-  print "too shaky, decrease this value (may be negative).  If the"
-  print "steering response is too slow, increase this value."
-  print ""
-  print ""
-  print "dampMPC / dampSteer is the amount of time that the samples"
-  print "will be projected and averaged to smooth the values"
-  print ""
   print ""
   print ("Press 1, 3, 5, 7 to incr 0.1, 0.05, 0.01, 0.001")
   print ("press a, d, g, j to decr 0.1, 0.05, 0.01, 0.001")
   print ("press 0 / L to make the value 0 / 1")
   print ("press SPACE / m for next /prev parameter")
-  print ("press q to quit")
+  print ("press z to quit")
 
   char  = getch()
   write_json = False
+
   if (char == "7"):
     kegman.conf[param[j]] = str(float(kegman.conf[param[j]]) + 0.001)
     write_json = True
@@ -122,7 +109,7 @@ while True:
     else:
       j = len(param) - 1
 
-  elif (char == "q"):
+  elif (char == "z"):
     break
 
 
@@ -152,6 +139,20 @@ while True:
 
   if float(kegman.conf['reactSteer']) > 1.0:
     kegman.conf['reactSteer'] = "1.0"
+
+  if float(kegman.conf['reactSteer']) + float(kegman.conf['dampSteer']) < 0:
+    if param[j] == "reactSteer":
+      kegman.conf['reactSteer'] = str(-float(kegman.conf['dampSteer']))
+    elif param[j] == "dampSteer":
+      kegman.conf['dampSteer'] = str(-float(kegman.conf['reactSteer']))
+
+  if float(kegman.conf['reactMPC']) + float(kegman.conf['dampMPC']) < 0:
+    if param[j] == "reactSteer":
+      kegman.conf['reactMPC'] = str(-float(kegman.conf['dampMPC']))
+    elif param[j] == "dampMPC":
+      kegman.conf['dampMPC'] = str(-float(kegman.conf['reactMPC']))
+
+
 
   if float(kegman.conf['Ki']) < 0 and float(kegman.conf['Ki']) != -1:
     kegman.conf['Ki'] = "0"
