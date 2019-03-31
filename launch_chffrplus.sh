@@ -23,9 +23,6 @@ function launch {
   echo 0-3 > /dev/cpuset/android/cpus
 
   export PYTHONPATH="$PWD"
- 
-  # Fix for health object non-detection
-  pkill -f boardd
 
   # start manager
   cd selfdrive
