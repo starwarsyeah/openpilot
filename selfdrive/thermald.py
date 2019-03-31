@@ -13,6 +13,8 @@ from common.realtime import sec_since_boot
 from common.numpy_fast import clip
 from common.filter_simple import FirstOrderFilter
 from selfdrive.kegman_conf import kegman_conf
+import subprocess
+import signal
 
 kegman = kegman_conf()
 ThermalStatus = log.ThermalData.ThermalStatus
@@ -292,20 +294,32 @@ def thermald_thread():
       if off_ts is None:
         off_ts = sec_since_boot()
 
-      # shutdown if the battery gets lower than 3%, it's discharging, we aren't running for
-      # more than a minute but we were running
-      if msg.thermal.batteryPercent < BATT_PERC_OFF and msg.thermal.batteryStatus == "Discharging" and \
-         started_seen and (sec_since_boot() - off_ts) > 60:
-        os.system('LD_LIBRARY_PATH="" svc power shutdown')
 
-    charging_disabled = check_car_battery_voltage(should_start, health, charging_disabled, msg)
-    
     # need to force batteryStatus because after NEOS update for 0.5.7 this doesn't work properly
     if msg.thermal.batteryCurrent > 0:
       msg.thermal.batteryStatus = "Discharging"
     else:
       msg.thermal.batteryStatus = "Charging"
-      
+
+      # shutdown if the battery gets lower than 3%, it's discharging, we aren't running for
+      # more than a minute but we were running
+    if msg.thermal.batteryPercent < BATT_PERC_OFF and msg.thermal.batteryStatus == "Discharging":
+      if msg.thermal.usbOnline:
+        # if there is power through the USB then shutting down just results in an immediate restart so kill services instead (E.g. Nidec)
+        kill_list = ["updated", "gpsd", "logcatd", "pandad", "ui", "uploader", "tombstoned", "logmessaged", "athena", "ai.comma"]
+      else:
+        # if not just shut it down completely (E.g. Bosch or disconnected)
+        os.system('LD_LIBRARY_PATH="" svc power shutdown')
+
+      # Kill processes to save battery cannot shutdown if plugged in because it will just restart after shutdown
+      for process_name in kill_list:
+        proc = subprocess.Popen(["pgrep", process_name], stdout=subprocess.PIPE)
+        for pid in proc.stdout:
+          os.kill(int(pid), signal.SIGTERM)
+
+    charging_disabled = check_car_battery_voltage(should_start, health, charging_disabled, msg)
+    
+          
     msg.thermal.chargingDisabled = charging_disabled
     msg.thermal.chargingError = current_filter.x > 1.0   # if current is > 1A out, then charger might be off
     msg.thermal.started = started_ts is not None

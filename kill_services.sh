@@ -1,0 +1,11 @@
+pkill "ai.comma"
+pkill "updated"
+pkill "gpsd"
+pkill "logcatd"
+pkill "pandad"
+pkill "ui"
+pkill "uploader"
+pkill "tombstoned"
+pkill "logmessaged"
+pkill "athena"
+
